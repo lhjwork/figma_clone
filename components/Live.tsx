@@ -34,8 +34,10 @@ const Live = () => {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}
-      className="border-5 border-green-500"
+      className="h-[100vh] w-full flex justify-center items-center text-center border-2"
     >
+      <h1 className="text-2xl text-white">한진이의 피그마 따라하기</h1>
+
       <LiveCursors others={others} />
     </div>
   )
