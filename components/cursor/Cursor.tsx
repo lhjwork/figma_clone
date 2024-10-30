@@ -17,8 +17,13 @@ const Cursor = ({ color, x, y, message }: Props) => {
 
       {/* MESSAGE */}
       {message && (
-        <div>
-          <p className="text-white">{message}</p>
+        <div
+          className="absoulte left-2 top-5 rounded-3xl px-4 py-2"
+          style={{ backgroundColor: color }}
+        >
+          <p className="text-white whitespace-nowrap text-sm leading-relaxed">
+            {message}
+          </p>
         </div>
       )}
     </div>
