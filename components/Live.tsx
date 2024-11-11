@@ -1,22 +1,30 @@
 import { useMyPresence, useOthers } from '@liveblocks/react/suspense'
 import LiveCursors from './cursor/LiveCursors'
-import { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import CursorChat from './cursor/CursorChat'
-import { CursorMode } from '@/types/type'
+import { CursorMode, CursorState, Reaction } from '@/types/type'
+import ReactionSelector from './reaction/ReactionButton'
 
 const Live = () => {
   const others = useOthers()
   const [{ cursor }, updateMyPresence] = useMyPresence() as any
 
-  const [cursorState, setCursorState] = useState({ mode: CursorMode.Hidden })
+  const [cursorState, setCursorState] = useState<CursorState>({
+    mode: CursorMode.Hidden,
+  })
+
+  // store the reactions created on mouse click
+  const [reactions, setReactions] = useState<Reaction[]>([])
 
   const handlePointerMove = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
 
-    const x = event.clientX - event.currentTarget.getBoundingClientRect().x
-    const y = event.clientY - event.currentTarget.getBoundingClientRect().y
+    if (cursor == null || cursorState.mode !== CursorMode.ReactionSelector) {
+      const x = event.clientX - event.currentTarget.getBoundingClientRect().x
+      const y = event.clientY - event.currentTarget.getBoundingClientRect().y
 
-    updateMyPresence({ cursor: { x, y } })
+      updateMyPresence({ cursor: { x, y } })
+    }
   }, [])
 
   const handlePointerLeave = useCallback((event: React.PointerEvent) => {
@@ -25,14 +33,31 @@ const Live = () => {
     updateMyPresence({ cursor: null, message: null })
   }, [])
 
-  const handlePointerDown = useCallback((event: React.PointerEvent) => {
-    event.preventDefault()
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent) => {
+      const x = event.clientX - event.currentTarget.getBoundingClientRect().x
+      const y = event.clientY - event.currentTarget.getBoundingClientRect().y
 
-    const x = event.clientX - event.currentTarget.getBoundingClientRect().x
-    const y = event.clientY - event.currentTarget.getBoundingClientRect().y
+      updateMyPresence({ cursor: { x, y } })
 
-    updateMyPresence({ cursor: { x, y } })
-  }, [])
+      // if cursor is in reaction mode, set isPressed to true
+      setCursorState((state: CursorState) =>
+        cursorState.mode === CursorMode.Reaction
+          ? { ...state, isPressed: true }
+          : state,
+      )
+    },
+    [cursorState.mode, setCursorState],
+  )
+
+  // hide the cursor when the mouse is up
+  const handlePointerUp = useCallback(() => {
+    setCursorState((state: CursorState) =>
+      cursorState.mode === CursorMode.Reaction
+        ? { ...state, isPressed: false }
+        : state,
+    )
+  }, [cursorState.mode, setCursorState])
 
   useEffect(() => {
     const onKeyUp = (e: KeyboardEvent) => {
@@ -45,6 +70,10 @@ const Live = () => {
       } else if (e.key === 'Escape') {
         updateMyPresence({ message: '' })
         setCursorState({ mode: CursorMode.Hidden })
+      } else if (e.key === 'e') {
+        setCursorState({
+          mode: CursorMode.ReactionSelector,
+        })
       }
     }
     const onKeyDown = (e: KeyboardEvent) => {
@@ -61,11 +90,20 @@ const Live = () => {
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [updateMyPresence])
+
+  const setReactions_2 = useCallback((reaction: string) => {
+    setCursorState({
+      mode: CursorMode.Reaction,
+      reaction,
+      isPressed: false,
+    })
+  }, [])
   return (
     <div
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
       className="h-[100vh] w-full flex justify-center items-center text-center border-2"
     >
       <h1 className="text-2xl text-white">한진이의 피그마 따라하기</h1>
@@ -77,6 +115,10 @@ const Live = () => {
           setCursorState={setCursorState}
           updateMyPresence={updateMyPresence}
         />
+      )}
+
+      {cursorState.mode === CursorMode.ReactionSelector && (
+        <ReactionSelector setReaction={setReactions_2} />
       )}
 
       <LiveCursors others={others} />
