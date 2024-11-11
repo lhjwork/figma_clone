@@ -49,7 +49,7 @@ const Live = () => {
     },
     [cursorState.mode, setCursorState],
   )
-
+  // 1:16:20
   // hide the cursor when the mouse is up
   const handlePointerUp = useCallback(() => {
     setCursorState((state: CursorState) =>
