@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import CursorChat from './cursor/CursorChat'
 import { CursorMode, CursorState, Reaction } from '@/types/type'
 import ReactionSelector from './reaction/ReactionButton'
+import FlyingReaction from './reaction/FlyingReaction'
+import useInterval from '@/hooks/useInterval'
 
 const Live = () => {
   const others = useOthers()
@@ -14,7 +16,23 @@ const Live = () => {
   })
 
   // store the reactions created on mouse click
-  const [reactions, setReactions] = useState<Reaction[]>([])
+  const [reaction, setReaction] = useState<Reaction[]>([])
+
+  useInterval(() => {
+    if (
+      cursorState.mode === CursorMode.Reaction &&
+      cursorState.isPressed &&
+      cursor
+    ) {
+      setReaction((reactions) =>
+        reactions.concat({
+          point: { x: cursor.x, y: cursor.y },
+          value: cursorState.reaction,
+          timestamp: Date.now(),
+        }),
+      )
+    }
+  }, 10)
 
   const handlePointerMove = useCallback((event: React.PointerEvent) => {
     event.preventDefault()
@@ -107,6 +125,16 @@ const Live = () => {
       className="h-[100vh] w-full flex justify-center items-center text-center border-2"
     >
       <h1 className="text-2xl text-white">한진이의 피그마 따라하기</h1>
+
+      {reaction.map((r) => (
+        <FlyingReaction
+          key={r.timestamp.toString()}
+          x={r.point.x}
+          y={r.point.y}
+          timestamp={r.timestamp}
+          value={r.value}
+        />
+      ))}
 
       {cursor && (
         <CursorChat
